@@ -2,7 +2,7 @@
 
 Ported from:
 - api/Beispielabfragen.R
-- script_vorlagen/Gemeinden_ZH_HIST.R
+- script_vorlagen/R/Gemeinden_ZH_HIST.R
 """
 
 from __future__ import annotations
@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any, Iterable
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
+import urllib.parse
 
 
 DEFAULT_BASE_URL = "https://gebietsstammdaten.statistik.zh.ch/api"
@@ -82,19 +83,23 @@ def gemeinde_suchen(
     dry_run: bool = False,
     normalize: bool = True,
 ) -> dict[str, Any] | list[Any] | DryRunRequest:
-    """Search a municipality by name.
+    """Search a municipality by name via GET with query parameter."""
+    
+    # Query-Parameter korrekt kodieren
+    query = urllib.parse.urlencode({"gemeindename": name})
+    url = f"{base_url}/gemeinden/gemeindename?{query}"
+    print(query)
 
-    Note: the API may return a list directly or a dict with a "treffer" key.
-    """
-
-    url = f"{base_url}/gemeinden/gemeindename"
-    body = {"name": name}
     if dry_run:
-        return DryRunRequest(method="POST", url=url, json_body=body)
+        return DryRunRequest(method="GET", url=url, json_body=None)
 
-    response = _request_json("POST", url, json_body=body, timeout_s=timeout_s)
+    # GET-Request:
+    response = _request_json("GET", url, timeout_s=timeout_s)
+
+    # Optional normalisieren: "treffer"-Key extrahieren
     if normalize and isinstance(response, dict) and "treffer" in response:
         return response["treffer"]
+
     return response
 
 

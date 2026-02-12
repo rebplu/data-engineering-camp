@@ -16,3 +16,8 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/gebietsstammdaten"]
+
+[dependency-groups]
+dev = [
+    "jupyter>=1.1.1",
+]
